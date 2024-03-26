@@ -1,5 +1,5 @@
 import { getFirebaseApp } from '../firebaseHelper';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { child, getDatabase, ref, set, update } from 'firebase/database';
 import { authenticate, logout } from '../../store/authSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,8 +9,8 @@ let timer;
 
 export const signUp = (firstName, lastName, email, password) => {
     return async dispatch => {
-
-        const { auth } = getFirebaseApp();
+        const app = getFirebaseApp();
+        const auth = getAuth(app);
 
         try {
             const result = await createUserWithEmailAndPassword(auth, email, password);
@@ -46,7 +46,8 @@ export const signUp = (firstName, lastName, email, password) => {
 
 export const signIn = (email, password) => {
     return async dispatch => {
-        const { auth } = getFirebaseApp();
+        const app = getFirebaseApp();
+        const auth = getAuth(app);
 
         try {
             const result = await signInWithEmailAndPassword(auth, email, password);
@@ -89,8 +90,10 @@ export const userLogout = () => {
 }
 
 export const updateSignedInUserData = async (userId, newData) => {
-    const firstLast = `${newData.firstName} ${newData.lastName}`.toLowerCase();
-    newData.firstLast = firstLast;
+    if (newData.firstName && newData.lastName) {
+        const firstLast = `${newData.firstName} ${newData.lastName}`.toLowerCase();
+        newData.firstLast = firstLast;
+    }
 
     const dbRef = ref(getDatabase());
     const childRef = child(dbRef, `users/${userId}`);

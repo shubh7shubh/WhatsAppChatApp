@@ -15,17 +15,41 @@ export const launchImagePicker = async () => {
     });
 
     if (!result.cancelled && result.assets.length > 0) {
-        const { uri } = result.assets[0]; // Destructure the URI from the first asset
+        const { uri } = result.assets[0];
         console.log(result, 'Image picked successfully');
-        return uri; // Return the URI
+        return uri;
     } else {
-        return null; // Return null if the image picking is cancelled or no asset is selected
+        return null;
     }
 }
 
-export const uploadImageAsync = async (uri) => {
-    const { app } = getFirebaseApp();
-    console.log(app, "app")
+export const openCamera = async () => {
+
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+        console.log("No permission to access the camera");
+        return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1
+    });
+
+    if (!result.cancelled && result.assets.length > 0) {
+        const { uri } = result.assets[0];
+        console.log(result, 'Image picked successfully');
+        return uri;
+    } else {
+        return null;
+    }
+}
+
+export const uploadImageAsync = async (uri, isChatImage = false) => {
+    const app = getFirebaseApp();
 
     const blob = await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -43,7 +67,7 @@ export const uploadImageAsync = async (uri) => {
         xhr.send();
     });
 
-    const pathFolder = 'profilePics';
+    const pathFolder = isChatImage ? 'chatImages' : 'profilePics';
     const storageRef = ref(getStorage(app), `${pathFolder}/${uuid.v4()}`);
 
     await uploadBytesResumable(storageRef, blob);
